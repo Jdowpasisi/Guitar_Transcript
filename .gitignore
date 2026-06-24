@@ -1,0 +1,130 @@
+# ==========================================
+# Python
+# ==========================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+.venv/
+ENV/
+
+# ==========================================
+# Jupyter
+# ==========================================
+.ipynb_checkpoints/
+
+# ==========================================
+# Environment Variables
+# ==========================================
+.env
+.env.*
+*.env
+
+# ==========================================
+# IDEs & Editors
+# ==========================================
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ==========================================
+# OS Files
+# ==========================================
+.DS_Store
+Thumbs.db
+
+# ==========================================
+# Logs
+# ==========================================
+logs/
+*.log
+
+# ==========================================
+# Build & Distribution
+# ==========================================
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# ==========================================
+# Python Testing
+# ==========================================
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+
+# ==========================================
+# Dataset Files
+# ==========================================
+data/raw/
+data/processed/
+
+# If you want to keep folder structure:
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+
+# ==========================================
+# Audio Files
+# ==========================================
+audio_samples/
+*.wav
+*.mp3
+*.flac
+
+# ==========================================
+# Model Files
+# ==========================================
+models/
+checkpoints/
+*.h5
+*.keras
+*.pt
+*.pth
+*.onnx
+*.joblib
+*.pkl
+
+# ==========================================
+# Numpy Artifacts
+# ==========================================
+*.npy
+*.npz
+
+# ==========================================
+# Temporary Files
+# ==========================================
+tmp/
+temp/
+.cache/
+
+# ==========================================
+# Training Outputs
+# ==========================================
+runs/
+outputs/
+results/
+experiments/
+
+# ==========================================
+# Documents
+# ==========================================
+context.md
+Guitar_Transcription_AI_Roadmap.docx
+GuitarAI_AIML_Edition.docx
+GuitarAI_AIML_Edition.md
+GuitarAI_AIML_Edition.pdf
+GuitarAI_Phased_Implementation.docx
+GuitarAI_Phased_Implementation.pdf
+GuitarAI_Roadmap.docx
+install.log
+prompt.txt
+tree.txt
+

@@ -1,0 +1,40 @@
+# --- Audio & Signal Processing ---
+librosa
+numpy
+soundfile
+matplotlib
+demucs
+scipy
+
+# --- Deep Learning (ML Core) ---
+torch
+torchvision
+torchaudio
+torchinfo
+scikit-learn
+jams
+mir_eval
+tqdm
+pandas
+
+# --- Specific Transcription Models ---
+basic-pitch
+crepe
+# Note: madmom often requires Cython and a specific install process, 
+# we will handle it when we reach P5.
+
+# --- Backend & API ---
+fastapi
+uvicorn[standard]
+python-multipart
+celery
+redis
+
+# --- Computer Vision ---
+opencv-python
+mediapipe
+ultralytics
+
+# --- Utilities ---
+yt-dlp
+python-dotenv
