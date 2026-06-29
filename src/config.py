@@ -137,6 +137,37 @@ CONFUSION_MAT = OUTPUTS_DIR / "confusion_matrix.png"
 LABEL_MAP_FILE = PROCESSED_DIR / "chord_dataset" / "label_map.json"
 
 # ─────────────────────────────────────────────────────────
+# P10: GUITAR VISION MODEL
+# ─────────────────────────────────────────────────────────
+# Dataset paths
+VISION_DATASET_DIR  = DATA_PROCESSED_DIR / "vision_dataset"
+NECK_DATASET_DIR    = VISION_DATASET_DIR / "neck"
+CHORD_DATASET_DIR   = VISION_DATASET_DIR / "chords"
+
+# Model checkpoints
+NECK_MODEL_PATH     = MODELS_DIR / "neck_detector.pt"
+CHORD_SHAPE_MODEL   = MODELS_DIR / "chord_shape_cnn.pth"
+
+# Chord shape classes (6 common open chords + 'none' for empty/unclear frames)
+CHORD_SHAPE_CLASSES = ["C", "Am", "G", "Em", "D", "F", "none"]
+NUM_CHORD_SHAPES    = len(CHORD_SHAPE_CLASSES)   # 7
+
+# Fretboard warp dimensions (must match P9 warp_fretboard.py)
+WARP_W = 600
+WARP_H = 200
+
+# Chord CNN input dimensions (resized from WARP_W × WARP_H)
+CHORD_INPUT_W = 200
+CHORD_INPUT_H = 64
+
+# P10 training hyperparameters
+P10_BATCH_SIZE = 32
+P10_EPOCHS     = 50
+P10_LR         = 1e-3
+P10_PATIENCE   = 8
+P10_DROPOUT    = 0.4
+
+# ─────────────────────────────────────────────────────────
 # LABELS
 # ─────────────────────────────────────────────────────────
 NO_CHORD = "N"   # label for silence / no active chord
@@ -153,6 +184,10 @@ def ensure_dirs():
         OUTPUTS_DIR / "splitter",
         OUTPUTS_DIR / "viz",
         PROCESSED_DIR / "chord_dataset",
+        # P10: Vision dataset directories
+        VISION_DATASET_DIR,
+        NECK_DATASET_DIR,
+        CHORD_DATASET_DIR,
     ]:
         d.mkdir(parents=True, exist_ok=True)
 

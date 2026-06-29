@@ -1,0 +1,172 @@
+.tab-display {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.tab-display--empty {
+  padding: 24px;
+  background: var(--surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+}
+
+.tab-display__empty-msg {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  margin-top: 8px;
+}
+
+/* Header row */
+.tab-display__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.tab-display__label {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.tab-display__note-count {
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+  font-size: 0.75rem;
+}
+
+/* Export button */
+.tab-export-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+
+.tab-export-btn svg {
+  width: 14px;
+  height: 14px;
+}
+
+.tab-export-btn:hover {
+  border-color: var(--gold-dim);
+  color: var(--gold);
+  background: var(--gold-glow);
+}
+
+/* Source bar */
+.tab-display__source-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.source-badge {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  padding: 3px 8px;
+  border-radius: 10px;
+}
+
+.source-badge--lstm    { background: var(--purple-dim); color: var(--purple); }
+.source-badge--greedy  { background: var(--amber-dim);  color: var(--amber); }
+
+.source-legend {
+  font-size: 0.6875rem;
+  color: var(--text-muted);
+  margin-left: 4px;
+}
+
+/* Tab frame — the star of the show */
+.tab-display__frame {
+  position: relative;
+  background: var(--tab-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+/* ── Signature element: fretboard position-dot inlay ───────────────────────
+   A subtle row of fret-position markers (like fretboard inlays on positions
+   3, 5, 7, 9, 12…) that runs across the top edge of the tab block.
+   Pure CSS — no images. It grounds the UI in the physical instrument. */
+.tab-display__inlay {
+  position: relative;
+  height: 10px;
+  background: #0a0a0a;
+  border-bottom: 1px solid var(--border);
+  overflow: hidden;
+}
+
+.inlay-dot {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--gold-dim);
+  box-shadow: 0 0 4px var(--gold-dim);
+}
+
+/* Scrollable tab content */
+.tab-scroll {
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 16px 0 16px;
+}
+
+.tab-display__pre {
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  line-height: 1.8;
+  color: var(--tab-text);
+  white-space: pre;
+  padding: 0 20px;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  width: max-content;
+  min-width: 100%;
+}
+
+.tab-line {
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid var(--tab-line);
+}
+
+.tab-line:last-child {
+  border-bottom: none;
+}
+
+.tab-string-label {
+  display: inline-block;
+  width: 18px;
+  color: var(--gold);
+  font-weight: 700;
+  flex-shrink: 0;
+  font-size: 0.8125rem;
+}
+
+.tab-string-content {
+  letter-spacing: 0.02em;
+}

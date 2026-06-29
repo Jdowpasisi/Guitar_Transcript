@@ -1,0 +1,33 @@
+# ── Python ──────────────────────────────────────────────────────────────────
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+
+# ── Heavy data (models + data mounted at runtime via docker-compose volumes) ─
+data/
+models/
+outputs/
+
+# ── Git ─────────────────────────────────────────────────────────────────────
+.git/
+.gitignore
+
+# ── IDE / OS ────────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# ── Docs / misc not needed in container ─────────────────────────────────────
+*.docx
+*.pdf
+*.zip
+*.log
+tree.txt
+install.log
+audio_samples/
+experiments/

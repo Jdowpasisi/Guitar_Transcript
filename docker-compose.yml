@@ -1,0 +1,85 @@
+# ── P7: GuitarAI docker-compose ───────────────────────────────────────────────
+# Start everything with: docker-compose up --build
+# Swagger UI:  http://localhost:8000/docs
+# Flower UI:   http://localhost:5555  (Celery task monitor)
+#
+# Volumes bind-mount your local models/ and data/ so the worker
+# can load checkpoints without rebuilding the image.
+
+services:
+
+  # ── Redis ── message broker + result backend ─────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # ── FastAPI server ───────────────────────────────────────────────────────────
+  api:
+    build:
+      context: .           # Build from GuitarAI project root
+      dockerfile: app/Dockerfile
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      REDIS_URL:      redis://redis:6379/0
+      GUITARAI_ROOT:  /app
+    volumes:
+      # Hot-reload: mount live source for development
+      - .:/app
+      # Prevent venv from being overwritten by the mount
+      - /app/venv
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    command: >
+      uvicorn app.main:app
+        --host 0.0.0.0
+        --port 8000
+        --reload
+
+  # ── Celery worker ────────────────────────────────────────────────────────────
+  worker:
+    build:
+      context: .
+      dockerfile: app/Dockerfile
+    restart: unless-stopped
+    environment:
+      REDIS_URL:          redis://redis:6379/0
+      GUITARAI_ROOT:      /app
+      CELERY_CONCURRENCY: "1"    # 1 worker = 1 GPU stream; increase on high-RAM machines
+    volumes:
+      - .:/app
+      - /app/venv
+    depends_on:
+      redis:
+        condition: service_healthy
+    command: >
+      celery -A app.celery_app worker
+        --loglevel=info
+        --concurrency=1
+        --queues=celery
+
+  # ── Flower (optional) — Celery task monitor ───────────────────────────────────
+  flower:
+    image: mher/flower:2.0
+    restart: unless-stopped
+    ports:
+      - "5555:5555"
+    environment:
+      CELERY_BROKER_URL: redis://redis:6379/0
+      FLOWER_PORT:        5555
+    depends_on:
+      - redis

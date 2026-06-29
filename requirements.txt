@@ -1,6 +1,6 @@
 # --- Audio & Signal Processing ---
 librosa
-numpy
+numpy==1.26.4               # pinned — scipy, madmom, mir_eval, numba all require <2.0
 soundfile
 matplotlib
 demucs
@@ -31,7 +31,7 @@ celery
 redis
 
 # --- Computer Vision ---
-opencv-python
+opencv-python==4.10.0.84   # --no-deps on install; >=4.11 requires numpy>=2
 mediapipe
 ultralytics
 

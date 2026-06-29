@@ -5,7 +5,10 @@ Contains:
   • ConvBlock, ChordCNN       — P4: chord classification
   • VoicingLSTM               — P6: (string, fret) prediction from MIDI sequences
 
-Run as __main__ to print model summaries for both architectures.
+P10's ChordShapeCNN lives in src/vision/chord_shape_cnn.py but is
+imported here for the unified model summary (run as __main__).
+
+Run as __main__ to print model summaries for all architectures.
 """
 
 from __future__ import annotations
@@ -317,4 +320,21 @@ if __name__ == "__main__":
     print(f"  Input  : midi={tuple(midi.shape)}, prev={tuple(prev.shape)}, "
           f"dt={tuple(dt.shape)}, lengths={lens.tolist()}")
     print(f"  Output : {tuple(out.shape)}   (B, T, 138)")
-    print("\n✅ Both models forward-pass OK.")
+
+    # ── P10: ChordShapeCNN ────────────────────────────────────────────────
+    print()
+    try:
+        from src.vision.chord_shape_cnn import ChordShapeCNN
+        from src.config import CHORD_INPUT_H, CHORD_INPUT_W, NUM_CHORD_SHAPES
+
+        chord_shape = ChordShapeCNN(num_classes=NUM_CHORD_SHAPES)
+        print(f"ChordShapeCNN (P10)")
+        print(f"  Parameters : {chord_shape.num_parameters:,}")
+        x_cs = torch.randn(2, 3, CHORD_INPUT_H, CHORD_INPUT_W)
+        out_cs = chord_shape(x_cs)
+        print(f"  Input  : {tuple(x_cs.shape)}  (B, C, H={CHORD_INPUT_H}, W={CHORD_INPUT_W})")
+        print(f"  Output : {tuple(out_cs.shape)}   (B, {NUM_CHORD_SHAPES} chord classes)")
+    except ImportError as e:
+        print(f"ChordShapeCNN (P10) — skipped ({e})")
+
+    print("\n✅ All models forward-pass OK.")

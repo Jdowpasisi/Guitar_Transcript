@@ -1,0 +1,156 @@
+.chord-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.chord-timeline--empty {
+  padding: 24px;
+  background: var(--surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+}
+
+.chord-timeline__label {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.chord-timeline__count {
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.chord-timeline__empty-msg {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  margin-top: 8px;
+}
+
+/* Scrollable track */
+.chord-timeline__scroll {
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: 8px;
+}
+
+.chord-timeline__track {
+  display: flex;
+  gap: 8px;
+  width: max-content;
+  align-items: stretch;
+}
+
+/* Chord card */
+.chord-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 16px;
+  background: var(--surface);
+  border-radius: var(--radius);
+  border: 1px solid var(--border-subtle);
+  min-width: 72px;
+  cursor: default;
+  transition: border-color 0.15s, background 0.15s;
+  position: relative;
+}
+
+.chord-card:hover {
+  background: var(--surface-raised);
+}
+
+/* Left accent stripe by confidence */
+.chord-card::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 8px;
+  bottom: 8px;
+  width: 2px;
+  border-radius: 1px;
+}
+
+.chord-card--high::before   { background: var(--green); }
+.chord-card--medium::before { background: var(--amber); }
+.chord-card--low::before    { background: var(--red); }
+
+.chord-card__timestamp {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.chord-card__name {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  line-height: 1;
+}
+
+.chord-card__root {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.03em;
+}
+
+.chord-card__quality {
+  font-size: 0.6875rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+}
+
+/* Confidence badge */
+.chord-card__badge {
+  font-size: 0.625rem;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 10px;
+  font-family: var(--font-mono);
+}
+
+.chord-card__badge--high   { background: var(--green-dim);  color: var(--green); }
+.chord-card__badge--medium { background: var(--amber-dim);  color: var(--amber); }
+.chord-card__badge--low    { background: var(--red-dim);    color: var(--red); }
+
+/* Legend */
+.chord-timeline__legend {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.legend-item {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-muted);
+}
+
+.legend-item::before {
+  content: '';
+  display: block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.legend-item--high::before   { background: var(--green); }
+.legend-item--medium::before { background: var(--amber); }
+.legend-item--low::before    { background: var(--red); }

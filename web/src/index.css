@@ -1,0 +1,105 @@
+/* ── GuitarAI Design System ──────────────────────────────────────────────────
+   Palette:
+     #0d0d0d  — almost-black body (ebony fretboard)
+     #1a1a1a  — card/surface (rosewood)
+     #2a2a2a  — border / divider
+     #f0e6c8  — warm cream (aged paper, tab text)
+     #c9a84c  — amber gold (guitar body lacquer) — signature accent
+     #4caf7d  — signal green (high confidence)
+     #e8894a  — amber orange (medium confidence)
+     #e05c5c  — muted red (low confidence / error)
+     #7b6ee0  — lavender (LSTM source badge)
+
+   Type:
+     Display / UI  — Space Grotesk (geometric, technical, confident)
+     Monospace     — Space Mono (tab display — pairs with Grotesk perfectly)
+
+   Signature: The fret-position dot grid that runs across the top of the
+   tab display — a literal fretboard inlay, rendered in CSS.
+────────────────────────────────────────────────────────────────────────────── */
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --bg:            #0d0d0d;
+  --surface:       #1a1a1a;
+  --surface-raised:#222222;
+  --border:        #2e2e2e;
+  --border-subtle: #242424;
+
+  --text-primary:  #f0e6c8;
+  --text-secondary:#a09070;
+  --text-muted:    #5a5040;
+
+  --gold:          #c9a84c;
+  --gold-dim:      #6b5820;
+  --gold-glow:     rgba(201, 168, 76, 0.15);
+
+  --green:         #4caf7d;
+  --green-dim:     rgba(76, 175, 125, 0.15);
+  --amber:         #e8894a;
+  --amber-dim:     rgba(232, 137, 74, 0.15);
+  --red:           #e05c5c;
+  --red-dim:       rgba(224, 92, 92, 0.15);
+  --purple:        #7b6ee0;
+  --purple-dim:    rgba(123, 110, 224, 0.15);
+
+  --tab-bg:        #111111;
+  --tab-line:      #2e2e2e;
+  --tab-text:      #d4c49a;
+
+  --font-ui:       'Space Grotesk', system-ui, sans-serif;
+  --font-mono:     'Space Mono', 'Courier New', monospace;
+
+  --radius-sm:     4px;
+  --radius:        8px;
+  --radius-lg:     12px;
+
+  --shadow:        0 2px 12px rgba(0,0,0,0.6);
+  --shadow-gold:   0 0 24px rgba(201, 168, 76, 0.12);
+}
+
+html { font-size: 16px; }
+
+body {
+  font-family: var(--font-ui);
+  background: var(--bg);
+  color: var(--text-primary);
+  line-height: 1.5;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+button {
+  font-family: var(--font-ui);
+  cursor: pointer;
+}
+
+a {
+  color: var(--gold);
+  text-decoration: none;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--surface); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Focus visible */
+:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
