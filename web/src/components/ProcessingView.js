@@ -1,59 +1,91 @@
 // src/components/ProcessingView.js
+// Shows pipeline progress for both audio-only and multimodal (video) pipelines.
 import React from 'react';
 import './ProcessingView.css';
 
-const STEPS = [
-  { label: 'Loading audio',               icon: '♪' },
-  { label: 'Separating guitar stem',      icon: '✂' },
-  { label: 'Transcribing notes',          icon: '𝄞' },
-  { label: 'Detecting chords',            icon: '⬡' },
-  { label: 'Assigning voicings',          icon: '⬡' },
-  { label: 'Rendering tablature',         icon: '≡' },
+const AUDIO_STEPS = [
+  { label: 'Loading audio',               icon: '♪',  hint: 'librosa load + normalize' },
+  { label: 'Separating guitar stem',      icon: '✂',  hint: 'Demucs htdemucs (P2)' },
+  { label: 'Transcribing notes',          icon: '𝄞',  hint: 'Basic Pitch ONNX (P5)' },
+  { label: 'Detecting chords',            icon: '⬡',  hint: 'ChordCNN (P4)' },
+  { label: 'Assigning voicings',          icon: '⚡',  hint: 'VoicingLSTM (P6)' },
+  { label: 'Rendering tablature',         icon: '≡',  hint: 'ASCII tab output' },
 ];
 
-function stepFromPercent(percent) {
-  if (percent <= 5)  return 0;
-  if (percent <= 15) return 1;
-  if (percent <= 35) return 2;
-  if (percent <= 55) return 3;
-  if (percent <= 75) return 4;
-  return 5;
+const VIDEO_STEPS = [
+  { label: 'Loading audio + video',           icon: '♪',  hint: 'Preparing both pipelines' },
+  { label: 'Separating guitar stem',          icon: '✂',  hint: 'Demucs htdemucs (P2)' },
+  { label: 'Extracting video frames',         icon: '🎬', hint: 'FFmpeg 5fps (P9)' },
+  { label: 'Transcribing notes (parallel)',   icon: '𝄞',  hint: 'Basic Pitch ONNX (P5)' },
+  { label: 'Tracking finger positions',       icon: '👆', hint: 'MediaPipe HandLandmarker (P11)' },
+  { label: 'Detecting chords',               icon: '⬡',  hint: 'ChordCNN (P4)' },
+  { label: 'Fusing audio + video',            icon: '🔀', hint: 'Cross-Attention FusionModel (P12)' },
+  { label: 'Rendering tablature',             icon: '≡',  hint: 'ASCII tab output' },
+];
+
+function stepFromPercent(percent, steps) {
+  const n = steps.length;
+  const idx = Math.floor((percent / 100) * n);
+  return Math.min(idx, n - 1);
 }
 
-export default function ProcessingView({ appState, progress, fileName }) {
+export default function ProcessingView({ appState, progress, fileName, hasVideo = false }) {
   const isUploading = appState === 'UPLOADING';
   const isPending   = appState === 'PENDING';
-  const activeStep  = isUploading || isPending ? -1 : stepFromPercent(progress.percent);
+  const steps       = hasVideo ? VIDEO_STEPS : AUDIO_STEPS;
+  const activeStep  = isUploading || isPending ? -1 : stepFromPercent(progress.percent, steps);
   const displayPct  = isUploading ? 0 : isPending ? 2 : progress.percent;
+
+  const uploaderLabel = hasVideo
+    ? 'Uploading video…'
+    : 'Uploading audio…';
+
+  const processingLabel = hasVideo
+    ? 'Transcribing (audio + vision)…'
+    : 'Transcribing…';
 
   return (
     <div className="processing">
       <div className="processing__header">
         <div className="processing__spinner" aria-hidden="true">
           <div className="processing__spinner-ring" />
-          <span className="processing__spinner-icon">🎸</span>
+          <span className="processing__spinner-icon">{hasVideo ? '🎬' : '🎸'}</span>
         </div>
         <div className="processing__title-group">
           <h2 className="processing__title">
-            {isUploading ? 'Uploading…' : isPending ? 'In queue…' : 'Transcribing…'}
+            {isUploading ? uploaderLabel : isPending ? 'In queue…' : processingLabel}
           </h2>
           {fileName && (
-            <p className="processing__filename">{fileName}</p>
+            <p className="processing__filename">{fileName.length > 60 ? fileName.slice(0, 57) + '…' : fileName}</p>
+          )}
+          {hasVideo && !isUploading && !isPending && (
+            <div className="processing__fusion-badge">
+              🔀 FusionModel (P12) — audio + video
+            </div>
           )}
         </div>
       </div>
 
       {/* Progress bar */}
-      <div className="processing__bar-track" role="progressbar" aria-valuenow={displayPct} aria-valuemin={0} aria-valuemax={100}>
-        <div className="processing__bar-fill" style={{ width: `${Math.max(displayPct, isUploading ? 8 : isPending ? 4 : 8)}%` }} />
+      <div
+        className="processing__bar-track"
+        role="progressbar"
+        aria-valuenow={displayPct}
+        aria-valuemin={0}
+        aria-valuemax={100}
+      >
+        <div
+          className="processing__bar-fill"
+          style={{ width: `${Math.max(displayPct, isUploading ? 8 : isPending ? 4 : 8)}%` }}
+        />
       </div>
 
       {/* Step list */}
       {!isUploading && !isPending && (
         <ol className="processing__steps" aria-label="Pipeline progress">
-          {STEPS.map((s, i) => {
-            const done    = i < activeStep;
-            const active  = i === activeStep;
+          {steps.map((s, i) => {
+            const done   = i < activeStep;
+            const active = i === activeStep;
             return (
               <li
                 key={s.label}
@@ -72,7 +104,12 @@ export default function ProcessingView({ appState, progress, fileName }) {
                     <span className="processing__step-dot" />
                   )}
                 </span>
-                <span className="processing__step-label">{s.label}</span>
+                <div className="processing__step-text">
+                  <span className="processing__step-label">{s.label}</span>
+                  {active && s.hint && (
+                    <span className="processing__step-hint">{s.hint}</span>
+                  )}
+                </div>
               </li>
             );
           })}
@@ -81,7 +118,10 @@ export default function ProcessingView({ appState, progress, fileName }) {
 
       {(isUploading || isPending) && (
         <p className="processing__status-text">
-          {isUploading ? 'Sending file to server…' : 'Waiting for a worker to pick up the job…'}
+          {isUploading
+            ? `Sending ${hasVideo ? 'video' : 'file'} to server…`
+            : 'Waiting for a worker to pick up the job…'
+          }
         </p>
       )}
     </div>

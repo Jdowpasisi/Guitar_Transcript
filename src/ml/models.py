@@ -337,4 +337,24 @@ if __name__ == "__main__":
     except ImportError as e:
         print(f"ChordShapeCNN (P10) — skipped ({e})")
 
+    # ── P12: FusionModel ─────────────────────────────────────────────────
+    print()
+    try:
+        from src.ml.fusion_model import FusionModel
+        from src.config import AUDIO_FEATURE_DIM, VIDEO_FEATURE_DIM
+
+        fusion = FusionModel()
+        print(f"FusionModel (P12)")
+        print(f"  Parameters : {fusion.num_parameters:,}")
+        B_f, T_f = 2, 20
+        a_f = torch.randn(B_f, T_f, AUDIO_FEATURE_DIM)
+        v_f = torch.randn(B_f, T_f, VIDEO_FEATURE_DIM)
+        l_f = torch.tensor([20, 15])
+        out_f = fusion(a_f, v_f, l_f)
+        print(f"  Input  : audio={tuple(a_f.shape)}, video={tuple(v_f.shape)}, "
+              f"lengths={l_f.tolist()}")
+        print(f"  Output : {tuple(out_f.shape)}   (B, T, 138)")
+    except ImportError as e:
+        print(f"FusionModel (P12) — skipped ({e})")
+
     print("\n✅ All models forward-pass OK.")

@@ -1,9 +1,17 @@
 // src/hooks/useTranscription.js
-// State machine for the transcription job lifecycle:
+// State machine for the transcription job lifecycle.
+// Supports three input modes: audio file, video file, YouTube URL
+//
 //   IDLE → UPLOADING → PENDING → PROCESSING → DONE | ERROR
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { submitTranscription, getJobStatus, getJobResult } from '../utils/api';
+import {
+  submitTranscription,
+  submitVideoTranscription,
+  submitYouTubeUrl,
+  getJobStatus,
+  getJobResult,
+} from '../utils/api';
 
 export const AppState = {
   IDLE:       'IDLE',
@@ -23,6 +31,7 @@ export function useTranscription() {
   const [result, setResult]       = useState(null);
   const [error, setError]         = useState(null);
   const [fileName, setFileName]   = useState(null);
+  const [hasVideo, setHasVideo]   = useState(false);
 
   const pollRef = useRef(null);
 
@@ -74,12 +83,14 @@ export function useTranscription() {
     }, POLL_INTERVAL_MS);
   }, [stopPolling]);
 
+  /** Submit an audio file (audio-only pipeline) */
   const submit = useCallback(async (file) => {
     setError(null);
     setResult(null);
     setFileName(file.name);
+    setHasVideo(false);
     setAppState(AppState.UPLOADING);
-    setProgress({ step: 'Uploading…', percent: 0 });
+    setProgress({ step: 'Uploading audio…', percent: 0 });
 
     try {
       const res = await submitTranscription(file);
@@ -93,6 +104,48 @@ export function useTranscription() {
     }
   }, [startPolling]);
 
+  /** Submit a video file (multimodal fusion pipeline) */
+  const submitVideo = useCallback(async (file) => {
+    setError(null);
+    setResult(null);
+    setFileName(file.name);
+    setHasVideo(true);
+    setAppState(AppState.UPLOADING);
+    setProgress({ step: 'Uploading video…', percent: 0 });
+
+    try {
+      const res = await submitVideoTranscription(file);
+      setJobId(res.job_id);
+      setAppState(AppState.PENDING);
+      setProgress({ step: 'Waiting in queue…', percent: 0 });
+      startPolling(res.job_id);
+    } catch (e) {
+      setError(e.message || 'Video upload failed.');
+      setAppState(AppState.ERROR);
+    }
+  }, [startPolling]);
+
+  /** Submit a YouTube URL (yt-dlp download + multimodal pipeline) */
+  const submitUrl = useCallback(async (url) => {
+    setError(null);
+    setResult(null);
+    setFileName(url);
+    setHasVideo(true);
+    setAppState(AppState.UPLOADING);
+    setProgress({ step: 'Sending URL to server…', percent: 0 });
+
+    try {
+      const res = await submitYouTubeUrl(url);
+      setJobId(res.job_id);
+      setAppState(AppState.PENDING);
+      setProgress({ step: 'Downloading video (yt-dlp)…', percent: 0 });
+      startPolling(res.job_id);
+    } catch (e) {
+      setError(e.message || 'URL submission failed.');
+      setAppState(AppState.ERROR);
+    }
+  }, [startPolling]);
+
   const reset = useCallback(() => {
     stopPolling();
     setAppState(AppState.IDLE);
@@ -101,7 +154,11 @@ export function useTranscription() {
     setResult(null);
     setError(null);
     setFileName(null);
+    setHasVideo(false);
   }, [stopPolling]);
 
-  return { appState, jobId, progress, result, error, fileName, submit, reset };
+  return {
+    appState, jobId, progress, result, error, fileName, hasVideo,
+    submit, submitVideo, submitUrl, reset,
+  };
 }

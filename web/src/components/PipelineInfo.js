@@ -6,8 +6,19 @@ export default function PipelineInfo({ pipeline }) {
   const [expanded, setExpanded] = useState(false);
   if (!pipeline) return null;
 
-  const { models_used = [], audio_duration_sec, processing_time_sec, note_count, chord_count, stem_separation } = pipeline;
-  const speedup = audio_duration_sec > 0 ? (audio_duration_sec / processing_time_sec).toFixed(1) : null;
+  const {
+    models_used = [], audio_duration_sec, processing_time_sec,
+    note_count, chord_count, stem_separation,
+    has_video, fusion_used, video_source,
+  } = pipeline;
+
+  const speedup = audio_duration_sec > 0
+    ? (audio_duration_sec / processing_time_sec).toFixed(1)
+    : null;
+
+  const summaryLabel = fusion_used
+    ? `FusionModel (P12) + ${models_used.slice(0, 2).join(' + ')}`
+    : `${models_used.slice(0, 2).join(' → ')}${models_used.length > 2 ? ` +${models_used.length - 2} more` : ''}`;
 
   return (
     <section className="pipeline-info">
@@ -18,7 +29,7 @@ export default function PipelineInfo({ pipeline }) {
         aria-controls="pipeline-detail"
       >
         <span className="pipeline-info__toggle-label">
-          Pipeline used: {models_used.slice(0, 2).join(' → ')}{models_used.length > 2 ? ` +${models_used.length - 2} more` : ''}
+          Pipeline: {summaryLabel}
         </span>
         <svg
           className={`pipeline-info__chevron ${expanded ? 'open' : ''}`}
@@ -30,6 +41,27 @@ export default function PipelineInfo({ pipeline }) {
 
       {expanded && (
         <div className="pipeline-info__detail" id="pipeline-detail">
+          {/* Fusion / video badges */}
+          {(has_video || fusion_used) && (
+            <div className="pipeline-badges">
+              {has_video && (
+                <span className="pipeline-badge pipeline-badge--video">
+                  🎬 Video {video_source === 'youtube' ? '(YouTube)' : '(Upload)'}
+                </span>
+              )}
+              {fusion_used && (
+                <span className="pipeline-badge pipeline-badge--fusion">
+                  🔀 FusionModel — 83.8% Tab Accuracy
+                </span>
+              )}
+              {!fusion_used && has_video && (
+                <span className="pipeline-badge pipeline-badge--fallback">
+                  ⚡ LSTM fallback (vision unavailable)
+                </span>
+              )}
+            </div>
+          )}
+
           <div className="pipeline-stats">
             <div className="pipeline-stat">
               <span className="pipeline-stat__value">{note_count}</span>
@@ -58,7 +90,9 @@ export default function PipelineInfo({ pipeline }) {
           <div className="pipeline-model-chain" aria-label="Model pipeline chain">
             {models_used.map((name, i) => (
               <React.Fragment key={name}>
-                <span className="pipeline-model">{name}</span>
+                <span className={`pipeline-model ${name.includes('Fusion') ? 'pipeline-model--fusion' : ''}`}>
+                  {name}
+                </span>
                 {i < models_used.length - 1 && (
                   <span className="pipeline-arrow" aria-hidden="true">→</span>
                 )}
@@ -75,4 +109,5 @@ export default function PipelineInfo({ pipeline }) {
       )}
     </section>
   );
+
 }

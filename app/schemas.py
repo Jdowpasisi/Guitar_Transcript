@@ -1,21 +1,27 @@
 """
-P7 API Schemas
-==============
+P7/P13 API Schemas
+==================
 Pydantic v2 models for every request/response shape.
 These also auto-generate the /docs Swagger UI.
+
+P13 additions:
+  - YouTubeDownloadRequest   : accepts a YouTube URL
+  - VideoJobSubmittedResponse: includes has_video flag
+  - PipelineInfo extended    : has_video + fusion_used fields
+  - NoteEvent voicing_source : now also accepts 'fusion'
 """
 
 from __future__ import annotations
 
 from typing import Any, Dict, List, Optional
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, HttpUrl
 
 
 # ─── Meta ──────────────────────────────────────────────────────────────────────
 
 class HealthResponse(BaseModel):
     status: str = Field(json_schema_extra={"example": "ok"})
-    version: str = Field(json_schema_extra={"example": "1.0.0"})
+    version: str = Field(json_schema_extra={"example": "2.0.0"})
 
 
 class ModelsInfoResponse(BaseModel):
@@ -32,6 +38,15 @@ class JobSubmittedResponse(BaseModel):
     message: str
     filename: Optional[str] = None
     size_mb: Optional[float] = None
+    has_video: bool = Field(default=False, description="True if a video was provided for fusion")
+
+
+class YouTubeDownloadRequest(BaseModel):
+    """Request body for POST /transcribe_url."""
+    url: str = Field(
+        description="YouTube (or yt-dlp-compatible) video URL",
+        json_schema_extra={"example": "https://www.youtube.com/watch?v=dQw4w9WgXcQ"},
+    )
 
 
 class JobStatusResponse(BaseModel):
@@ -67,8 +82,8 @@ class NoteEvent(BaseModel):
     string_name: str = Field(description="String note name", json_schema_extra={"example": "G3"})
     confidence: float = Field(description="Note detection confidence [0, 1]", json_schema_extra={"example": 0.91})
     voicing_source: str = Field(
-        description="'lstm' | 'greedy' | 'heuristic'",
-        json_schema_extra={"example": "lstm"},
+        description="'lstm' | 'greedy' | 'fusion' — which model assigned this voicing",
+        json_schema_extra={"example": "fusion"},
     )
 
 
@@ -77,12 +92,25 @@ class PipelineInfo(BaseModel):
     stem_separation: bool = Field(description="Was Demucs stem separation applied?")
     models_used: List[str] = Field(
         description="Ordered list of models that ran",
-        json_schema_extra={"example": ["Demucs htdemucs", "Basic Pitch ONNX", "ChordCNN", "VoicingLSTM"]},
+        json_schema_extra={"example": ["Demucs htdemucs", "Basic Pitch ONNX", "ChordCNN", "FusionModel"]},
     )
     audio_duration_sec: float
     processing_time_sec: float
     note_count: int
     chord_count: int
+    # P13 additions
+    has_video: bool = Field(
+        default=False,
+        description="True if video was available and used in fusion",
+    )
+    fusion_used: bool = Field(
+        default=False,
+        description="True if FusionModel (P12) was used for voicing",
+    )
+    video_source: Optional[str] = Field(
+        default=None,
+        description="'upload' | 'youtube' | None — how video was acquired",
+    )
 
 
 class TranscriptionResult(BaseModel):

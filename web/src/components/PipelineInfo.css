@@ -111,3 +111,47 @@
   padding-top: 4px;
   border-top: 1px solid var(--border-subtle);
 }
+
+/* P13: Fusion/video badges */
+.pipeline-badges {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.pipeline-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 12px;
+  border-radius: 14px;
+  font-family: var(--font-ui);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.pipeline-badge--video {
+  background: rgba(123, 110, 224, 0.1);
+  border: 1px solid rgba(123, 110, 224, 0.3);
+  color: var(--purple, #7b6ee0);
+}
+
+.pipeline-badge--fusion {
+  background: rgba(201, 168, 76, 0.1);
+  border: 1px solid rgba(201, 168, 76, 0.3);
+  color: var(--gold);
+}
+
+.pipeline-badge--fallback {
+  background: rgba(232, 137, 74, 0.1);
+  border: 1px solid rgba(232, 137, 74, 0.3);
+  color: var(--amber, #e8894a);
+}
+
+.pipeline-model--fusion {
+  background: rgba(201, 168, 76, 0.12);
+  border-color: rgba(201, 168, 76, 0.4);
+  color: var(--gold);
+}
+

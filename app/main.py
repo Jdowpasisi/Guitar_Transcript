@@ -1,8 +1,19 @@
 """
-P7: Transcription API — Main FastAPI Application
-=================================================
+P13: GuitarAI v1 — Transcription API
+======================================
+GuitarAI v1 upgrades the P7 API with three input modes:
+
+  1. Audio only     → POST /transcribe           (P7 unchanged)
+  2. Video upload   → POST /transcribe_video     (P13 new)
+  3. YouTube URL    → POST /transcribe_url       (P13 new)
+
+All three routes return a job_id immediately (async). Poll /status/{id}
+and fetch the full result from /result/{id}.
+
 Endpoints:
   POST /transcribe          — Upload audio, returns job_id immediately
+  POST /transcribe_video    — Upload video (audio + vision + fusion)
+  POST /transcribe_url      — YouTube URL → yt-dlp download + full pipeline
   GET  /status/{job_id}    — Poll job state (PENDING / STARTED / SUCCESS / FAILURE)
   GET  /result/{job_id}    — Full transcription JSON once SUCCESS
   GET  /models             — Versions of every loaded model
@@ -22,18 +33,21 @@ from .schemas import (
     TranscriptionResult,
     ModelsInfoResponse,
     HealthResponse,
+    YouTubeDownloadRequest,
 )
-from .tasks import run_pipeline  # noqa: F401  (must be imported so Celery discovers it)
+from .tasks import run_pipeline, run_pipeline_with_video, run_pipeline_from_url  # noqa: F401
 
 # ─── App setup ─────────────────────────────────────────────────────────────────
 
 app = FastAPI(
-    title="GuitarAI Transcription API",
+    title="GuitarAI v1 Transcription API",
     description=(
-        "Wraps the full P1–P6 ML pipeline behind an async REST interface. "
-        "Upload audio → get a job_id → poll until done → fetch chord + tab results."
+        "GuitarAI v1: Full multimodal guitar transcription system. "
+        "Accepts audio, video, or a YouTube URL. "
+        "Routes through FusionModel (P12) when video is available, "
+        "LSTM (P6) for audio-only. Returns chord chart + guitar tablature."
     ),
-    version="1.0.0",
+    version="2.0.0",
 )
 
 app.add_middleware(
@@ -48,7 +62,10 @@ UPLOAD_DIR = Path("/tmp/guitarai_uploads")
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
 ALLOWED_AUDIO_EXTENSIONS = {".mp3", ".wav", ".flac", ".ogg", ".m4a", ".aac"}
-MAX_FILE_SIZE_MB = 100
+ALLOWED_VIDEO_EXTENSIONS = {".mp4", ".avi", ".mov", ".mkv", ".webm", ".m4v"}
+
+MAX_AUDIO_SIZE_MB = 100
+MAX_VIDEO_SIZE_MB = 500   # Videos are large
 
 
 # ─── Endpoints ─────────────────────────────────────────────────────────────────
@@ -62,8 +79,7 @@ async def health():
 @app.get("/models", response_model=ModelsInfoResponse, tags=["Meta"])
 async def models_info():
     """
-    Returns metadata for every model loaded in the pipeline.
-    Versions are baked in at build time; checksum the .pth files for identity.
+    Returns metadata for every model loaded in the GuitarAI v1 pipeline.
     """
     return ModelsInfoResponse(
         models={
@@ -80,6 +96,7 @@ async def models_info():
                 "num_classes": 51,
                 "description": "P4: 3-block CNN classifies chords from CQT spectrograms",
                 "type": "trained",
+                "benchmark": "26.4% chord accuracy on GuitarSet test set",
             },
             "basic_pitch": {
                 "name": "Basic Pitch (Spotify)",
@@ -95,6 +112,25 @@ async def models_info():
                 "output_classes": 138,
                 "description": "P6: Bi-LSTM maps MIDI notes to (string, fret) positions",
                 "type": "trained",
+                "benchmark": "35.0% Tab Accuracy on GuitarSet test set",
+            },
+            "chord_shape_cnn": {
+                "name": "ChordShapeCNN",
+                "version": "1.0.0",
+                "checkpoint": "models/chord_shape_cnn.pth",
+                "num_classes": 7,
+                "description": "P10: CNN classifies chord shapes from warped fretboard images",
+                "type": "trained",
+            },
+            "fusion_model": {
+                "name": "FusionModel (Cross-Attention Transformer)",
+                "version": "1.0.0",
+                "checkpoint": "models/fusion_model.pth",
+                "parameters": "1.14M",
+                "output_classes": 138,
+                "description": "P12: Multimodal cross-attention model fusing audio (56d) + video (7d) features",
+                "type": "trained",
+                "benchmark": "83.8% Tab Accuracy (fused) vs 71.2% audio-only on GuitarSet test set",
             },
         }
     )
@@ -103,11 +139,11 @@ async def models_info():
 @app.post("/transcribe", response_model=JobSubmittedResponse, status_code=202, tags=["Transcription"])
 async def transcribe(file: UploadFile = File(...)):
     """
-    Accept an audio upload, save to staging, enqueue Celery task.
+    Accept an audio upload, save to staging, enqueue audio-only pipeline.
 
+    Pipeline: Demucs → Basic Pitch → ChordCNN → VoicingLSTM → ASCII tab
     Returns a job_id within ~100ms regardless of file size.
     """
-    # Extension check
     suffix = Path(file.filename or "audio.mp3").suffix.lower()
     if suffix not in ALLOWED_AUDIO_EXTENSIONS:
         raise HTTPException(
@@ -115,21 +151,18 @@ async def transcribe(file: UploadFile = File(...)):
             detail=f"Unsupported audio format '{suffix}'. Allowed: {sorted(ALLOWED_AUDIO_EXTENSIONS)}",
         )
 
-    # Read and size-check
     contents = await file.read()
     size_mb = len(contents) / (1024 * 1024)
-    if size_mb > MAX_FILE_SIZE_MB:
+    if size_mb > MAX_AUDIO_SIZE_MB:
         raise HTTPException(
             status_code=413,
-            detail=f"File too large ({size_mb:.1f} MB). Maximum: {MAX_FILE_SIZE_MB} MB",
+            detail=f"File too large ({size_mb:.1f} MB). Maximum: {MAX_AUDIO_SIZE_MB} MB",
         )
 
-    # Persist to staging with a unique name
     job_id = str(uuid.uuid4())
     staging_path = UPLOAD_DIR / f"{job_id}{suffix}"
     staging_path.write_bytes(contents)
 
-    # Enqueue — fire and forget
     run_pipeline.apply_async(
         args=[str(staging_path), job_id],
         task_id=job_id,
@@ -138,9 +171,105 @@ async def transcribe(file: UploadFile = File(...)):
     return JobSubmittedResponse(
         job_id=job_id,
         status="PENDING",
-        message="Job queued. Poll /status/{job_id} to track progress.",
+        message="Audio job queued. Poll /status/{job_id} to track progress.",
         filename=file.filename,
         size_mb=round(size_mb, 2),
+        has_video=False,
+    )
+
+
+@app.post("/transcribe_video", response_model=JobSubmittedResponse, status_code=202, tags=["Transcription"])
+async def transcribe_video(file: UploadFile = File(...)):
+    """
+    Accept a video upload. Runs the full GuitarAI v1 multimodal pipeline:
+
+    Audio branch (parallel):   Demucs → Basic Pitch → ChordCNN
+    Vision branch (parallel):  P9 frames → P10 neck detect → P11 finger tracking
+    Fusion:                    FusionModel (P12) combines audio + video → voicings
+    Output:                    ASCII tab with per-note source badge (fusion/lstm/greedy)
+
+    Returns a job_id within ~100ms. Video files up to 500 MB accepted.
+    """
+    suffix = Path(file.filename or "video.mp4").suffix.lower()
+    if suffix not in ALLOWED_VIDEO_EXTENSIONS:
+        raise HTTPException(
+            status_code=415,
+            detail=f"Unsupported video format '{suffix}'. Allowed: {sorted(ALLOWED_VIDEO_EXTENSIONS)}",
+        )
+
+    contents = await file.read()
+    size_mb = len(contents) / (1024 * 1024)
+    if size_mb > MAX_VIDEO_SIZE_MB:
+        raise HTTPException(
+            status_code=413,
+            detail=f"File too large ({size_mb:.1f} MB). Maximum for video: {MAX_VIDEO_SIZE_MB} MB",
+        )
+
+    job_id = str(uuid.uuid4())
+
+    # Save video to staging
+    video_staging_path = UPLOAD_DIR / f"{job_id}_video{suffix}"
+    video_staging_path.write_bytes(contents)
+
+    # Audio will be extracted from video by the vision pipeline
+    # Pass the video path as both audio_path (for initial load check) and video_path
+    run_pipeline_with_video.apply_async(
+        args=[str(video_staging_path), str(video_staging_path), job_id],
+        kwargs={"video_source": "upload"},
+        task_id=job_id,
+    )
+
+    return JobSubmittedResponse(
+        job_id=job_id,
+        status="PENDING",
+        message=(
+            "Multimodal job queued. Audio + vision pipelines will run in parallel. "
+            "Poll /status/{job_id} to track progress."
+        ),
+        filename=file.filename,
+        size_mb=round(size_mb, 2),
+        has_video=True,
+    )
+
+
+@app.post("/transcribe_url", response_model=JobSubmittedResponse, status_code=202, tags=["Transcription"])
+async def transcribe_url(request: YouTubeDownloadRequest):
+    """
+    Accept a YouTube (or yt-dlp-compatible) URL. Downloads video via yt-dlp,
+    then runs the full GuitarAI v1 multimodal pipeline.
+
+    The entire pipeline runs asynchronously. Poll /status/{job_id}.
+    Download + processing may take 2–5 minutes depending on video length.
+
+    Example body:
+        {"url": "https://www.youtube.com/watch?v=VIDEO_ID"}
+    """
+    url = str(request.url).strip()
+    if not url:
+        raise HTTPException(status_code=422, detail="url field is required")
+
+    # Basic URL sanity check
+    if not (url.startswith("http://") or url.startswith("https://")):
+        raise HTTPException(status_code=422, detail="url must be a valid HTTP/HTTPS URL")
+
+    job_id = str(uuid.uuid4())
+
+    run_pipeline_from_url.apply_async(
+        args=[url, job_id],
+        task_id=job_id,
+    )
+
+    return JobSubmittedResponse(
+        job_id=job_id,
+        status="PENDING",
+        message=(
+            f"YouTube download + transcription job queued. "
+            f"Downloading: {url[:60]}{'...' if len(url) > 60 else ''}. "
+            "Poll /status/{job_id} to track progress."
+        ),
+        filename=url,
+        size_mb=None,
+        has_video=True,
     )
 
 
@@ -157,7 +286,6 @@ async def job_status(job_id: str):
     meta = {}
 
     if state == "STARTED":
-        # Worker publishes progress info in task meta
         meta = result.info or {}
     elif state == "FAILURE":
         meta = {"error": str(result.result)}

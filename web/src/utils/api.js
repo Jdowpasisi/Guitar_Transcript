@@ -1,5 +1,5 @@
 // src/utils/api.js
-// All communication with the P7 FastAPI backend.
+// All communication with the GuitarAI v1 FastAPI backend.
 // The CRA proxy (package.json → "proxy": "http://localhost:8000") forwards
 // /transcribe, /status, /result, etc. to the API during development.
 // In production, set REACT_APP_API_URL to the deployed base URL.
@@ -9,7 +9,6 @@ const BASE_URL = process.env.REACT_APP_API_URL || '';
 async function apiFetch(path, options = {}) {
   const res = await fetch(`${BASE_URL}${path}`, options);
   if (!res.ok) {
-    // Try to pull a detail message from FastAPI's error body
     let detail = `HTTP ${res.status}`;
     try {
       const body = await res.json();
@@ -23,9 +22,9 @@ async function apiFetch(path, options = {}) {
 }
 
 /**
- * POST /transcribe
+ * POST /transcribe  (audio-only)
  * @param {File} file
- * @returns {Promise<{job_id, status, message, filename, size_mb}>}
+ * @returns {Promise<{job_id, status, message, filename, size_mb, has_video}>}
  */
 export async function submitTranscription(file) {
   const formData = new FormData();
@@ -33,6 +32,33 @@ export async function submitTranscription(file) {
   return apiFetch('/transcribe', {
     method: 'POST',
     body: formData,
+  });
+}
+
+/**
+ * POST /transcribe_video  (video upload → multimodal fusion pipeline)
+ * @param {File} file
+ * @returns {Promise<{job_id, status, message, filename, size_mb, has_video}>}
+ */
+export async function submitVideoTranscription(file) {
+  const formData = new FormData();
+  formData.append('file', file);
+  return apiFetch('/transcribe_video', {
+    method: 'POST',
+    body: formData,
+  });
+}
+
+/**
+ * POST /transcribe_url  (YouTube URL → yt-dlp → multimodal pipeline)
+ * @param {string} url
+ * @returns {Promise<{job_id, status, message, filename, has_video}>}
+ */
+export async function submitYouTubeUrl(url) {
+  return apiFetch('/transcribe_url', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ url }),
   });
 }
 

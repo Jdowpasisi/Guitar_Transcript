@@ -1,0 +1,296 @@
+/* src/components/InputSelector.css */
+/* Three-tab input mode selector for GuitarAI v1 */
+
+.input-selector {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+/* ── Tabs ──────────────────────────────────────────────────────── */
+.input-tabs {
+  display: flex;
+  gap: 2px;
+  background: var(--bg);
+  border-radius: 14px 14px 0 0;
+  overflow: hidden;
+  border-bottom: 1px solid rgba(201, 168, 76, 0.15);
+}
+
+.input-tab {
+  flex: 1;
+  background: transparent;
+  border: none;
+  padding: 14px 12px 12px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  transition: background 0.2s, border-bottom 0.2s;
+  border-bottom: 2px solid transparent;
+  position: relative;
+  outline: none;
+}
+
+.input-tab:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: -2px;
+}
+
+.input-tab:hover:not(.input-tab--active) {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.input-tab--active {
+  border-bottom: 2px solid var(--gold);
+  background: rgba(201, 168, 76, 0.06);
+}
+
+.input-tab__icon {
+  font-size: 1.3rem;
+  line-height: 1;
+}
+
+.input-tab__label {
+  font-family: var(--font-ui);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: 0.02em;
+}
+
+.input-tab--active .input-tab__label {
+  color: var(--gold);
+}
+
+.input-tab__desc {
+  font-family: var(--font-ui);
+  font-size: 0.68rem;
+  color: var(--text-dim, #888);
+  letter-spacing: 0.01em;
+}
+
+/* ── Drop Zone ─────────────────────────────────────────────────── */
+.drop-zone {
+  min-height: 220px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 36px 24px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1.5px dashed rgba(201, 168, 76, 0.3);
+  border-radius: 0 0 14px 14px;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+  text-align: center;
+  user-select: none;
+}
+
+.drop-zone:hover,
+.drop-zone--active {
+  background: rgba(201, 168, 76, 0.06);
+  border-color: rgba(201, 168, 76, 0.7);
+}
+
+.drop-zone:focus-visible {
+  outline: 2px solid var(--gold);
+}
+
+.drop-zone__icon {
+  font-size: 2.8rem;
+  filter: drop-shadow(0 0 12px rgba(201, 168, 76, 0.35));
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-6px); }
+}
+
+.drop-zone__text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.drop-zone__primary {
+  font-family: var(--font-ui);
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.drop-zone__secondary {
+  font-family: var(--font-ui);
+  font-size: 0.85rem;
+  color: var(--text-dim, #999);
+}
+
+.drop-zone__link {
+  color: var(--gold);
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  transition: text-decoration-color 0.2s;
+}
+
+.drop-zone:hover .drop-zone__link {
+  text-decoration-color: var(--gold);
+}
+
+.drop-zone__formats {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--text-dim, #777);
+  letter-spacing: 0.02em;
+}
+
+.drop-zone__badge {
+  margin-top: 8px;
+  padding: 6px 14px;
+  background: rgba(201, 168, 76, 0.1);
+  border: 1px solid rgba(201, 168, 76, 0.3);
+  border-radius: 20px;
+  font-family: var(--font-ui);
+  font-size: 0.75rem;
+  color: var(--gold);
+  letter-spacing: 0.02em;
+}
+
+/* ── YouTube Panel ─────────────────────────────────────────────── */
+.yt-panel {
+  padding: 32px 28px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1.5px solid rgba(201, 168, 76, 0.15);
+  border-radius: 0 0 14px 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  text-align: center;
+}
+
+.yt-panel__icon {
+  font-size: 2.5rem;
+  filter: drop-shadow(0 0 12px rgba(201, 168, 76, 0.3));
+}
+
+.yt-panel__intro {
+  font-family: var(--font-ui);
+  font-size: 0.9rem;
+  color: var(--text-dim, #aaa);
+  line-height: 1.6;
+  margin: 0;
+  max-width: 380px;
+}
+
+.yt-panel__form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  max-width: 520px;
+  align-items: stretch;
+}
+
+.yt-panel__input-wrap {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.yt-panel__input {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1.5px solid rgba(201, 168, 76, 0.3);
+  border-radius: 10px;
+  padding: 13px 16px;
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  color: var(--text-primary);
+  outline: none;
+  transition: border-color 0.2s, background 0.2s;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.yt-panel__input::placeholder {
+  color: rgba(240, 230, 200, 0.3);
+}
+
+.yt-panel__input:focus {
+  border-color: var(--gold);
+  background: rgba(201, 168, 76, 0.05);
+}
+
+.yt-panel__input--error {
+  border-color: var(--red, #e05c5c);
+}
+
+.yt-panel__error {
+  font-family: var(--font-ui);
+  font-size: 0.78rem;
+  color: var(--red, #e05c5c);
+  text-align: left;
+  padding-left: 4px;
+}
+
+.yt-panel__submit {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 13px 24px;
+  background: var(--gold);
+  color: #111;
+  border: none;
+  border-radius: 10px;
+  font-family: var(--font-ui);
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: opacity 0.2s, transform 0.15s, box-shadow 0.2s;
+  box-shadow: 0 0 20px rgba(201, 168, 76, 0.25);
+}
+
+.yt-panel__submit:hover:not(:disabled) {
+  opacity: 0.9;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 24px rgba(201, 168, 76, 0.4);
+}
+
+.yt-panel__submit:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.yt-panel__submit-icon {
+  font-size: 1rem;
+  transition: transform 0.2s;
+}
+
+.yt-panel__submit:hover:not(:disabled) .yt-panel__submit-icon {
+  transform: translateX(4px);
+}
+
+.yt-panel__badge {
+  padding: 6px 16px;
+  background: rgba(201, 168, 76, 0.1);
+  border: 1px solid rgba(201, 168, 76, 0.25);
+  border-radius: 20px;
+  font-family: var(--font-ui);
+  font-size: 0.75rem;
+  color: var(--gold);
+}
+
+.yt-panel__note {
+  font-family: var(--font-ui);
+  font-size: 0.78rem;
+  color: var(--text-dim, #888);
+  margin: 0;
+}
