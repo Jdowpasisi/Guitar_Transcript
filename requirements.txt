@@ -38,3 +38,4 @@ ultralytics
 # --- Utilities ---
 yt-dlp
 python-dotenv
+yt-dlp
